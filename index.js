@@ -22,6 +22,13 @@ app.use('/api/orders', orderRoutes);
 const reviewRoutes = require('./routes/reviewRoutes');
 app.use('/api/reviews', reviewRoutes);
 
+const paymentRoutes = require('./routes/paymentRoutes');
+app.use('/api/payment', paymentRoutes);
+
+const mealDbRoutes = require('./routes/mealDbRoutes');
+app.use('/api/mealdb', mealDbRoutes);
+
+
 
 
 // MongoDB connection

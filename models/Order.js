@@ -9,11 +9,12 @@ const OrderSchema = new mongoose.Schema({
     }
   ],
   totalAmount: Number,
-  status: {
-    type: String,
-    enum: ['Pending', 'Paid', 'Cancelled'],
-    default: 'Pending'
-  },
+  paymentStatus: {
+  type: String,
+  enum: ['pending', 'paid', 'failed'],
+  default: 'pending',
+},
+paymentIntentId: String,
   createdAt: {
     type: Date,
     default: Date.now
