@@ -28,13 +28,18 @@ app.use('/api/payment', paymentRoutes);
 const mealDbRoutes = require('./routes/mealDbRoutes');
 app.use('/api/mealdb', mealDbRoutes);
 
-app.use('/api/statistics', require('./routes/statisticsRoutes'));
+const statisticsRoutes = require('./routes/statisticsRoutes');
+app.use('/api/statistics', statisticsRoutes);
 
-
-
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+  dbName: 'KupaRashit',
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
   .then(() => {
     console.log('MongoDB connected successfully');
     app.listen(PORT, () => {
@@ -44,4 +49,3 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => {
     console.error('MongoDB connection failed:', err.message);
   });
-

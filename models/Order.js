@@ -17,8 +17,11 @@ const OrderSchema = new mongoose.Schema({
 paymentIntentId: String,
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+    
+  },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+
 });
 
 module.exports = mongoose.model('Order', OrderSchema);

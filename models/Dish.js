@@ -18,7 +18,9 @@ const DishSchema = new mongoose.Schema({
   suggestedPrice: Number, // calculated by server
   ingredients: [IngredientSchema],
   salesData: [SalesDataSchema],
-  image: String
+  image: String,
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+
 });
 
 

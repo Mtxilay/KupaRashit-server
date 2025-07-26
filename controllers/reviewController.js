@@ -1,9 +1,9 @@
 const Review = require('../models/Review');
 
-// Create a new review
+// Public: Create a new review (no auth required)
 exports.createReview = async (req, res) => {
   try {
-    const review = new Review(req.body);
+    const review = new Review(req.body);  // Assumes body contains dishId, rating, comment, etc.
     const saved = await review.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -11,7 +11,7 @@ exports.createReview = async (req, res) => {
   }
 };
 
-// Get all reviews 
+// Private: Get all reviews (requires auth)
 exports.getReviews = async (req, res) => {
   try {
     const reviews = await Review.find();
@@ -21,7 +21,7 @@ exports.getReviews = async (req, res) => {
   }
 };
 
-// Get all reviews for a specific dish
+// Private: Get all reviews for a specific dish (requires auth)
 exports.getReviewsByDish = async (req, res) => {
   try {
     const reviews = await Review.find({ dishId: req.params.dishId });
@@ -31,7 +31,7 @@ exports.getReviewsByDish = async (req, res) => {
   }
 };
 
-// Delete a review by ID
+// Private: Delete a review (requires auth)
 exports.deleteReview = async (req, res) => {
   try {
     const deleted = await Review.findByIdAndDelete(req.params.id);

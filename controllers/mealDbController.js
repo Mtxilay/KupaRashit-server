@@ -52,6 +52,7 @@ exports.searchMealsByName = async (req, res) => {
 };
 
 // IMPORT: POST /api/mealdb/import/:id
+// IMPORT: POST /api/mealdb/import/:id
 exports.importMealById = async (req, res) => {
   const { id } = req.params;
 
@@ -66,9 +67,10 @@ exports.importMealById = async (req, res) => {
       name: meal.strMeal,
       image: meal.strMealThumb,
       ingredients,
-      suggestedPrice: 0, // You can calculate later
+      suggestedPrice: 0, // Will be computed after
       price: Math.floor(Math.random() * 50) + 20,
-      salesData: []
+      salesData: [],
+      userId: req.user.userId // ✅ Add the logged-in user's ID
     });
 
     const savedDish = await newDish.save();
@@ -77,3 +79,4 @@ exports.importMealById = async (req, res) => {
     res.status(500).json({ error: 'Failed to import dish', details: err.message });
   }
 };
+

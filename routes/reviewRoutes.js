@@ -1,17 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const reviewController = require('../controllers/reviewController');
+const auth = require('../middleware/authMiddleware');
+
 
 // POST - Create review
 router.post('/', reviewController.createReview);
 
 // GET - All reviews for a specific dish
-router.get('/dish/:dishId', reviewController.getReviewsByDish);
+router.get('/dish/:dishId',auth, reviewController.getReviewsByDish);
 
 //GET all reviews 
-router.get('/', reviewController.getReviews);
+router.get('/',auth, reviewController.getReviews);
 
 // DELETE - Remove a review by its ID
-router.delete('/:id', reviewController.deleteReview);
+router.delete('/:id',auth, reviewController.deleteReview);
 
 module.exports = router;

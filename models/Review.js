@@ -10,8 +10,11 @@ const ReviewSchema = new mongoose.Schema({
   comment: String,
   date: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+    
+  },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+
 });
 
 module.exports = mongoose.model('Review', ReviewSchema);
