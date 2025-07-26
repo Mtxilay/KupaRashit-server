@@ -1,12 +1,6 @@
 const mongoose = require('mongoose');
 const Dish = require('../models/Dish');
-
-// Helper: calculate suggested price
-function calculateSuggestedPrice(ingredients) {
-  return ingredients.reduce((total, item) => {
-    return total + item.quantity * item.price;
-  }, 0);
-}
+const { computeDishStatistics } = require('../utils/statisticsEngine');
 
 // Get all dishes
 exports.getAllDishes = async (req, res) => {
@@ -40,13 +34,13 @@ exports.getDishById = async (req, res) => {
 // Create new dish
 exports.createDish = async (req, res) => {
   try {
-    const suggestedPrice = calculateSuggestedPrice(req.body.ingredients || []);
-    const dish = new Dish({
-      ...req.body,
-      suggestedPrice // stored but not forced as final price
-    });
+    const dish = new Dish({ ...req.body });
+    await dish.save();
 
+    const stats = await computeDishStatistics(dish._id);
+    dish.suggestedPrice = stats.suggestedPrice;
     const savedDish = await dish.save();
+
     res.status(201).json(savedDish);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -62,14 +56,13 @@ exports.updateDish = async (req, res) => {
   }
 
   try {
-    const suggestedPrice = calculateSuggestedPrice(req.body.ingredients || []);
+    await Dish.findByIdAndUpdate(id, req.body, { runValidators: true });
+
+    const stats = await computeDishStatistics(id);
     const updatedDish = await Dish.findByIdAndUpdate(
       id,
-      {
-        ...req.body,
-        suggestedPrice
-      },
-      { new: true, runValidators: true }
+      { suggestedPrice: stats.suggestedPrice },
+      { new: true }
     );
 
     if (!updatedDish) {

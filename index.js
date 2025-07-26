@@ -28,6 +28,8 @@ app.use('/api/payment', paymentRoutes);
 const mealDbRoutes = require('./routes/mealDbRoutes');
 app.use('/api/mealdb', mealDbRoutes);
 
+app.use('/api/statistics', require('./routes/statisticsRoutes'));
+
 
 
 
