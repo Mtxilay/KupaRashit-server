@@ -34,6 +34,12 @@ app.use('/api/statistics', statisticsRoutes);
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
+
+const cashRegisterRoutes = require('./routes/cashRegisterRoutes');
+app.use('/api/cashregister', cashRegisterRoutes);
+
+
+
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
   dbName: 'KupaRashit',
