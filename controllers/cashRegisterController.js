@@ -19,20 +19,20 @@ exports.importCashRegisterData = async (req, res) => {
     let dish = null;
     let alias = await DishAlias.findOne({ alias: aliasName, userId });
 
-     console.log("searching", name);
-
     // 1. Try alias lookup
-    
-     console.log("lookign for alias");
+
     if (alias?.dishId) {
       dish = await Dish.findOne({ _id: alias.dishId, userId });
     }
 
     // 2. Try exact dish name match
-      console.log("looking for exact match");
-    if (!dish) {
-      dish = await Dish.findOne({ name: aliasName, userId });
-    }
+
+if (!dish) {
+  dish = await Dish.findOne({ name: aliasName, userId });
+  if (dish) {
+    alias = await DishAlias.create({ alias: aliasName, dishId: dish._id, userId });
+  }
+}
 
 // 3. Fuzzy match if not found
 console.log(userId);
@@ -43,8 +43,6 @@ if (!dish) {
     const dishNames = userDishes.map(d => d.name).filter(Boolean);
     const { bestMatch } = stringSimilarity.findBestMatch(aliasName.toLowerCase(), dishNames.map(n => n.toLowerCase()));
 
-    console.log(`Trying to match: "${aliasName}"`);
-    console.log(`Best match:`, bestMatch);
 
     if (bestMatch.rating > 0.4) {
       dish = userDishes.find(d => d.name.toLowerCase() === bestMatch.target);
@@ -71,3 +69,61 @@ if (!dish) {
 
   res.json({ results });
 };
+
+
+exports.getAliases = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const aliases = await DishAlias.find({ userId }).populate('dishId', 'name');
+    res.json(aliases);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch aliases', error: err.message });
+  }
+};
+
+exports.deleteAlias = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const aliasId = req.params.id;
+
+    const deleted = await DishAlias.findOneAndDelete({ _id: aliasId, userId });
+
+    if (!deleted) {
+      return res.status(404).json({ message: 'Alias not found or not owned by user' });
+    }
+
+    res.json({ message: 'Alias deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete alias', error: err.message });
+  }
+};
+
+exports.addAlias = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { alias, dishId } = req.body;
+
+    if (!alias || !dishId) {
+      return res.status(400).json({ message: 'alias and dishId are required' });
+    }
+
+    // Check if dish belongs to this user
+    const dish = await Dish.findOne({ _id: dishId, userId });
+    if (!dish) {
+      return res.status(403).json({ message: 'Dish does not belong to this user' });
+    }
+
+    // Check if alias already exists
+    const existing = await DishAlias.findOne({ alias, userId });
+    if (existing) {
+      return res.status(409).json({ message: 'Alias already exists for this user' });
+    }
+
+    const newAlias = await DishAlias.create({ alias, dishId, userId });
+    res.status(201).json({ message: 'Alias created', alias: newAlias });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to create alias', error: err.message });
+  }
+};
+
+

@@ -5,7 +5,7 @@ const auth = require('../middleware/authMiddleware');
 
 
 // POST - Create review
-router.post('/', reviewController.createReview);
+router.post('/',auth, reviewController.createReview);
 
 // GET - All reviews for a specific dish
 router.get('/dish/:dishId',auth, reviewController.getReviewsByDish);

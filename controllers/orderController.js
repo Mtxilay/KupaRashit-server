@@ -1,15 +1,41 @@
+const Dish = require('../models/Dish');
 const Order = require('../models/Order');
+// Public: Place an order 
 
-// Public: Place an order (no auth required)
 exports.createOrder = async (req, res) => {
   try {
-    const order = new Order(req.body);
-    const saved = await order.save();
-    res.status(201).json(saved);
+    const userId = req.user.userId;
+    console.log(req.user.body);
+    const { customerName, dishes } = req.body;
+
+    // Basic validation
+    if (!customerName || !Array.isArray(dishes) || dishes.length === 0) {
+      return res.status(400).json({ message: 'Customer name and at least one dish are required.' });
+    }
+
+    // Fetch prices for dishes and verify ownership
+    const dishIds = dishes.map(d => d.dishId);
+    const foundDishes = await Dish.find({ _id: { $in: dishIds }, userId });
+
+    if (foundDishes.length !== dishIds.length) {
+      return res.status(400).json({ message: 'One or more dishes not found or unauthorized.' });
+    }
+
+    // Calculate total
+    const totalAmount = dishes.reduce((sum, item) => {
+      const dish = foundDishes.find(d => d._id.toString() === item.dishId);
+      return sum + (dish.price * item.quantity);
+    }, 0);
+
+    const order = new Order({ customerName, dishes, totalAmount, userId });
+    const savedOrder = await order.save();
+
+    res.status(201).json(savedOrder);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ message: 'Error creating order', error: err.message });
   }
 };
+
 
 // Private: Get all orders (requires auth)
 exports.getOrders = async (req, res) => {

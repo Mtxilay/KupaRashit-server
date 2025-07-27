@@ -1,7 +1,7 @@
 const axios = require('axios');
 const Dish = require('../models/Dish');
 
-// Helper: Convert TheMealDB ingredients to your schema format
+// Helper: Convert TheMealDB ingredients to our format
 function parseMealDbIngredients(meal) {
   const ingredients = [];
 
@@ -51,7 +51,7 @@ exports.searchMealsByName = async (req, res) => {
   }
 };
 
-// IMPORT: POST /api/mealdb/import/:id
+
 // IMPORT: POST /api/mealdb/import/:id
 exports.importMealById = async (req, res) => {
   const { id } = req.params;

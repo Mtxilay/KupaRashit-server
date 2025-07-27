@@ -6,7 +6,7 @@ const ReviewSchema = new mongoose.Schema({
     ref: 'Dish',
     required: true
   },
-  rating: Number,
+  rating: {type: Number,required: true},
   comment: String,
   date: {
     type: Date,

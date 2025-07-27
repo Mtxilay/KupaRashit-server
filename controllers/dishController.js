@@ -45,9 +45,43 @@ exports.getDishById = async (req, res) => {
 // POST /api/dishes
 exports.createDish = async (req, res) => {
   const userId = req.user.userId;
+  const { name, price, ingredients } = req.body;
 
-  if (!req.body || Object.keys(req.body).length === 0) {
-    return res.status(400).json({ message: 'Dish data is required' });
+  // Basic validation
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ message: 'Dish name is required and must be a non-empty string' });
+  }
+
+  if (typeof price !== 'number' || price <= 0) {
+    return res.status(400).json({ message: 'Price must be a non-negative number' });
+  }
+
+  // Duplicate check
+  const existingDish = await Dish.findOne({ name: name.trim(), userId });
+  if (existingDish) {
+    return res.status(400).json({ message: 'Dish with this name already exists' });
+  }
+
+  // Optional: validate ingredients
+  if (ingredients && !Array.isArray(ingredients)) {
+    return res.status(400).json({ message: 'Ingredients must be an array' });
+  }
+
+  if (ingredients) {
+    for (const ing of ingredients) {
+      if (
+        !ing.ingredientName ||
+        typeof ing.ingredientName !== 'string' ||
+        typeof ing.quantity !== 'number' ||
+        ing.quantity <= 0 ||
+        !ing.unit ||
+        typeof ing.unit !== 'string' ||
+        typeof ing.price !== 'number' ||
+        ing.price <= 0
+      ) {
+        return res.status(400).json({ message: 'One or more ingredients are invalid' });
+      }
+    }
   }
 
   try {
@@ -60,16 +94,11 @@ exports.createDish = async (req, res) => {
 
     res.status(201).json(savedDish);
   } catch (err) {
-    console.error("Error creating dish:", err);
-    if (err.name === 'ValidationError') {
-      const messages = Object.values(err.errors).map(e => e.message);
-      return res.status(400).json({ message: messages.join(', ') });
-    }
-    res.status(500).json({ message: 'Server error while creating dish' });
+    res.status(400).json({ message: err.message });
   }
 };
 
-// PUT /api/dishes/:id
+
 exports.updateDish = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.userId;
@@ -78,8 +107,37 @@ exports.updateDish = async (req, res) => {
     return res.status(400).json({ message: 'Invalid dish ID format' });
   }
 
+  const { name, price, ingredients } = req.body;
+
+  // Optional field validations (only if present)
+  if (name !== undefined && typeof name !== 'string' || name.length<1) {
+    return res.status(400).json({ message: 'If provided, name must be a not empty string' });
+  }
+
+  if (price !== undefined && (typeof price !== 'number' || price < 0)) {
+    return res.status(400).json({ message: 'If provided, price must be a positive number' });
+  }
+
+  if (ingredients !== undefined) {
+    if (!Array.isArray(ingredients)) {
+      return res.status(400).json({ message: 'Ingredients must be an array' });
+    }
+
+    const invalid = ingredients.some(ing =>
+      typeof ing !== 'object' ||
+      typeof ing.ingredientName !== 'string' ||
+      typeof ing.unit !== 'string' ||
+      typeof ing.quantity !== 'number' || ing.quantity <= 0 ||
+      typeof ing.price !== 'number' || ing.price <= 0
+    );
+
+    if (invalid) {
+      return res.status(400).json({ message: 'One or more ingredients are invalid' });
+    }
+  }
+
   try {
-    const updates = pickFields(req.body, ['name', 'ingredients', 'operationalCost', 'ingredientCost']);
+    const updates = pickFields(req.body, ['name', 'price', 'ingredients', 'operationalCost', 'ingredientCost']);
     const updated = await Dish.findOneAndUpdate(
       { _id: id, userId },
       updates,
@@ -104,6 +162,7 @@ exports.updateDish = async (req, res) => {
     res.status(500).json({ message: 'Server error while updating dish' });
   }
 };
+
 
 // DELETE /api/dishes/:id
 exports.deleteDish = async (req, res) => {

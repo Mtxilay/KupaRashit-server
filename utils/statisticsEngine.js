@@ -28,12 +28,13 @@ async function computeDishStatistics(dishId) {
 
   // Ingredient cost
   const ingredientCost = dish.ingredients.reduce(
-    (sum, ing) => sum + (ing.quantity * ing.price),
+    (sum, ing) => sum + (ing.quantity * ing.price*0.1),
     0
   );
 
   const operationalCost = ingredientCost * OPERATIONAL_COST_RATE;
-  const suggestedPrice = (ingredientCost + operationalCost) * PRICE_MARKUP;
+const suggestedPrice = ((ingredientCost || 0) + (operationalCost || 0)) * (PRICE_MARKUP || 1.5);
+
 
   // Percentage of total sales
   const allDishes = await Dish.find();
