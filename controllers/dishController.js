@@ -17,7 +17,7 @@ const pickFields = (obj, fields) => {
 exports.getAllDishes = async (req, res) => {
   const userId = req.user.userId;
   try {
-    const dishes = await Dish.find({ userId }).populate('ingredients');
+    const dishes = await Dish.find({ userId }).populate("ingredients");
     res.json(dishes);
   } catch (err) {
     console.error("Error getting dishes:", err);

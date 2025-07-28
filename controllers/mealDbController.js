@@ -63,29 +63,16 @@ exports.importMealById = async (req, res) => {
     const meal = response.data.meals?.[0];
     if (!meal) return res.status(404).json({ error: 'Meal not found' });
 
-    const ingredients = parseMealDbIngredients(meal);
+    const rawIngredients = parseMealDbIngredients(meal);
     const userId = req.user.userId;
 
-    const newDish = new Dish({
-      name: meal.strMeal,
-      image: meal.strMealThumb,
-      ingredients,
-      suggestedPrice: 0,
-      price: Math.floor(Math.random() * 50) + 20,
-      salesData: [],
-      userId,
-      category: 'Main Course',
-    });
+    const dishIngredients = [];
 
-    // 🔁 Save each ingredient to Ingredient collection (if not exists)
-    for (const ing of ingredients) {
-      const exists = await Ingredient.findOne({
-        name: ing.ingredientName,
-        userId
-      });
+    for (const ing of rawIngredients) {
+      let ingredientDoc = await Ingredient.findOne({ name: ing.ingredientName, userId });
 
-      if (!exists) {
-        await Ingredient.create({
+      if (!ingredientDoc) {
+        ingredientDoc = await Ingredient.create({
           name: ing.ingredientName,
           unit: ing.unit,
           price: ing.price,
@@ -93,12 +80,30 @@ exports.importMealById = async (req, res) => {
           imageUrl: ing.imageUrl
         });
       }
+
+      dishIngredients.push({
+        _id: ingredientDoc._id, // ✅ Reference by _id
+        quantity: ing.quantity
+      });
     }
+
+    const newDish = new Dish({
+      name: meal.strMeal,
+      image: meal.strMealThumb,
+      ingredients: dishIngredients, // ✅ Correct format
+      suggestedPrice: 0,
+      price: Math.floor(Math.random() * 50) + 20,
+      salesData: [],
+      userId,
+      category: 'Main Course',
+    });
 
     const savedDish = await newDish.save();
     res.status(201).json({ message: 'Dish imported', dish: savedDish });
+
   } catch (err) {
     console.error("Error importing meal:", err);
     res.status(500).json({ error: 'Failed to import dish', details: err.message });
   }
 };
+
