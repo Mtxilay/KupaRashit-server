@@ -194,6 +194,31 @@ exports.updateDish = async (req, res) => {
   }
 };
 
+//Hard update api/dishes/hard/:id
+exports.hardUpdateDish = async (req, res) => {
+  try {
+    const updated = await Dish.findByIdAndUpdate(
+      req.params.id,
+      {
+        name: req.body.name,
+        price: req.body.price,
+        category: req.body.category,
+        description: req.body.description,
+        image: req.body.image,
+        ingredients: req.body.ingredients
+      },
+      { new: true, runValidators: true } // Return updated doc, validate enums etc.
+    );
+
+    if (!updated) return res.status(404).json({ message: "Dish not found" });
+    res.json(updated);
+  } catch (err) {
+    console.error("Error in hard update:", err);
+    res.status(400).json({ message: "Hard update failed", error: err.message });
+  }
+};
+
+
 // DELETE /api/dishes/:id
 exports.deleteDish = async (req, res) => {
   const { id } = req.params;
