@@ -45,7 +45,7 @@ exports.getDishById = async (req, res) => {
 // POST /api/dishes
 exports.createDish = async (req, res) => {
   const userId = req.user.userId;
-  const { name, price, ingredients } = req.body;
+  const { name, price, ingredients, description } = req.body;
 
   // Basic validation
   if (!name || typeof name !== 'string' || !name.trim()) {
@@ -56,13 +56,15 @@ exports.createDish = async (req, res) => {
     return res.status(400).json({ message: 'Price must be a non-negative number' });
   }
 
-  // Duplicate check
+  if (description && typeof description !== 'string') {
+    return res.status(400).json({ message: 'Description must be a string' });
+  }
+
   const existingDish = await Dish.findOne({ name: name.trim(), userId });
   if (existingDish) {
     return res.status(400).json({ message: 'Dish with this name already exists' });
   }
 
-  // Optional: validate ingredients
   if (ingredients && !Array.isArray(ingredients)) {
     return res.status(400).json({ message: 'Ingredients must be an array' });
   }
@@ -98,7 +100,7 @@ exports.createDish = async (req, res) => {
   }
 };
 
-
+// PUT /api/dishes/:id
 exports.updateDish = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.userId;
@@ -107,15 +109,18 @@ exports.updateDish = async (req, res) => {
     return res.status(400).json({ message: 'Invalid dish ID format' });
   }
 
-  const { name, price, ingredients } = req.body;
+  const { name, price, ingredients, description } = req.body;
 
-  // Optional field validations (only if present)
-  if (name !== undefined && typeof name !== 'string' || name.length<1) {
-    return res.status(400).json({ message: 'If provided, name must be a not empty string' });
+  if (name !== undefined && (typeof name !== 'string' || name.length < 1)) {
+    return res.status(400).json({ message: 'If provided, name must be a non-empty string' });
   }
 
   if (price !== undefined && (typeof price !== 'number' || price < 0)) {
     return res.status(400).json({ message: 'If provided, price must be a positive number' });
+  }
+
+  if (description !== undefined && typeof description !== 'string') {
+    return res.status(400).json({ message: 'If provided, description must be a string' });
   }
 
   if (ingredients !== undefined) {
@@ -137,7 +142,7 @@ exports.updateDish = async (req, res) => {
   }
 
   try {
-    const updates = pickFields(req.body, ['name', 'price', 'ingredients', 'operationalCost', 'ingredientCost']);
+    const updates = pickFields(req.body, ['name', 'price', 'ingredients', 'operationalCost', 'ingredientCost', 'description']);
     const updated = await Dish.findOneAndUpdate(
       { _id: id, userId },
       updates,
@@ -162,7 +167,6 @@ exports.updateDish = async (req, res) => {
     res.status(500).json({ message: 'Server error while updating dish' });
   }
 };
-
 
 // DELETE /api/dishes/:id
 exports.deleteDish = async (req, res) => {
