@@ -1,7 +1,8 @@
 const axios = require('axios');
 const Dish = require('../models/Dish');
+const Ingredient = require('../models/Ingredient');
 
-// Helper: Convert TheMealDB ingredients to our format
+// Helper: Convert TheMealDB ingredients to your format
 function parseMealDbIngredients(meal) {
   const ingredients = [];
 
@@ -12,13 +13,14 @@ function parseMealDbIngredients(meal) {
     if (name && name.trim()) {
       const match = measure?.match(/^([\d/.]+)?\s*(.*)$/) || [];
       const quantity = match[1] ? parseFloat(match[1]) : 1;
-      const unit = match[2]?.trim() || '';
+      const unit = match[2]?.trim() || 'unit';
 
       ingredients.push({
         ingredientName: name.trim(),
         quantity: isNaN(quantity) ? 1 : quantity,
         unit,
-        price: 0 // Default price (editable later)
+        price: 0, // default price (editable later)
+        imageUrl: `https://www.themealdb.com/images/ingredients/${encodeURIComponent(name.trim())}.png`
       });
     }
   }
@@ -47,10 +49,10 @@ exports.searchMealsByName = async (req, res) => {
 
     res.json(preview);
   } catch (err) {
+    console.error("Error fetching meals:", err);
     res.status(500).json({ error: 'Failed to fetch meals from TheMealDB' });
   }
 };
-
 
 // IMPORT: POST /api/mealdb/import/:id
 exports.importMealById = async (req, res) => {
@@ -62,21 +64,41 @@ exports.importMealById = async (req, res) => {
     if (!meal) return res.status(404).json({ error: 'Meal not found' });
 
     const ingredients = parseMealDbIngredients(meal);
+    const userId = req.user.userId;
 
     const newDish = new Dish({
       name: meal.strMeal,
       image: meal.strMealThumb,
       ingredients,
-      suggestedPrice: 0, // Will be computed after
+      suggestedPrice: 0,
       price: Math.floor(Math.random() * 50) + 20,
       salesData: [],
-      userId: req.user.userId // ✅ Add the logged-in user's ID
+      userId,
+      category: 'Main Course',
     });
+
+    // 🔁 Save each ingredient to Ingredient collection (if not exists)
+    for (const ing of ingredients) {
+      const exists = await Ingredient.findOne({
+        name: ing.ingredientName,
+        userId
+      });
+
+      if (!exists) {
+        await Ingredient.create({
+          name: ing.ingredientName,
+          unit: ing.unit,
+          price: ing.price,
+          userId,
+          imageUrl: ing.imageUrl
+        });
+      }
+    }
 
     const savedDish = await newDish.save();
     res.status(201).json({ message: 'Dish imported', dish: savedDish });
   } catch (err) {
+    console.error("Error importing meal:", err);
     res.status(500).json({ error: 'Failed to import dish', details: err.message });
   }
 };
-

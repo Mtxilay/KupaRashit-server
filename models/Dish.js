@@ -1,12 +1,5 @@
 const mongoose = require('mongoose');
 
-const IngredientSchema = new mongoose.Schema({
-  ingredientName: String,
-  quantity: Number,
-  unit: String,
-  price: Number
-});
-
 const SalesDataSchema = new mongoose.Schema({
   quantity: Number,
   saleDate: { type: Date, default: Date.now }
@@ -16,11 +9,21 @@ const DishSchema = new mongoose.Schema({
   name: String,
   price: Number,  // chosen by manager
   suggestedPrice: Number, // calculated by server
-  ingredients: [IngredientSchema],
+  ingredients: [
+  {
+    ingredient: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' },
+    quantity: Number
+  }
+],
   salesData: [SalesDataSchema],
   image: String,
   description: String,
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  category: {
+  type: String,
+  enum: ['Appetizer', 'Main Course', 'Side Dish', 'Dessert', 'Beverage', 'Best Seller', 'Starter'],
+  required: true
+}
 
 });
 

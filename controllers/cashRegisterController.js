@@ -1,6 +1,7 @@
 const Dish = require('../models/Dish');
 const DishAlias = require('../models/DishAlias');
 const stringSimilarity = require('string-similarity');
+const Ingredient = require('../models/Ingredient');
 
 exports.importCashRegisterData = async (req, res) => {
   const { items } = req.body;
@@ -58,6 +59,7 @@ if (!dish) {
     // 4. Save or return mismatch
 
     if (dish) {
+        
       dish.salesData.push({ quantity, saleDate: new Date() });
       await dish.save();
 

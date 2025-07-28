@@ -38,6 +38,10 @@ app.use('/api/auth', authRoutes);
 const cashRegisterRoutes = require('./routes/cashRegisterRoutes');
 app.use('/api/cashregister', cashRegisterRoutes);
 
+const ingredientRoutes = require('./routes/ingredientRoutes');
+app.use('/api/ingredients', ingredientRoutes);
+
+
 
 
 // MongoDB connection

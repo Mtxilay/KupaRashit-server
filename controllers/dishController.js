@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const Dish = require('../models/Dish');
+const Ingredient = require('../models/Ingredient');
 const { computeDishStatistics } = require('../utils/statisticsEngine');
+
+const ALLOWED_CATEGORIES = ['Starter', 'Main Course', 'Dessert', 'Drink', 'Side', 'Other'];
 
 // Helper: whitelist fields allowed for update
 const pickFields = (obj, fields) => {
@@ -14,7 +17,7 @@ const pickFields = (obj, fields) => {
 exports.getAllDishes = async (req, res) => {
   const userId = req.user.userId;
   try {
-    const dishes = await Dish.find({ userId });
+    const dishes = await Dish.find({ userId }).populate('ingredients');
     res.json(dishes);
   } catch (err) {
     console.error("Error getting dishes:", err);
@@ -32,7 +35,7 @@ exports.getDishById = async (req, res) => {
   }
 
   try {
-    const dish = await Dish.findOne({ _id: id, userId });
+    const dish = await Dish.findOne({ _id: id, userId }).populate('ingredients');
     if (!dish) return res.status(404).json({ message: 'Dish not found' });
 
     res.json(dish);
@@ -42,12 +45,33 @@ exports.getDishById = async (req, res) => {
   }
 };
 
+// GET /api/ingredients/:id
+exports.getIngredientById = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.userId;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid ingredient ID format' });
+  }
+
+  try {
+    const ingredient = await Ingredient.findOne({ _id: id, userId });
+    if (!ingredient) {
+      return res.status(404).json({ message: 'Ingredient not found' });
+    }
+    res.json(ingredient);
+  } catch (err) {
+    console.error('Error getting ingredient:', err);
+    res.status(500).json({ message: 'Server error while retrieving ingredient' });
+  }
+};
+
 // POST /api/dishes
 exports.createDish = async (req, res) => {
   const userId = req.user.userId;
-  const { name, price, ingredients, description } = req.body;
+  const { name, price, ingredients, description, category } = req.body;
 
-  // Basic validation
+  // Validation
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ message: 'Dish name is required and must be a non-empty string' });
   }
@@ -60,34 +84,33 @@ exports.createDish = async (req, res) => {
     return res.status(400).json({ message: 'Description must be a string' });
   }
 
+  if (category && !ALLOWED_CATEGORIES.includes(category)) {
+    return res.status(400).json({ message: `Category must be one of: ${ALLOWED_CATEGORIES.join(', ')}` });
+  }
+
   const existingDish = await Dish.findOne({ name: name.trim(), userId });
   if (existingDish) {
     return res.status(400).json({ message: 'Dish with this name already exists' });
   }
 
   if (ingredients && !Array.isArray(ingredients)) {
-    return res.status(400).json({ message: 'Ingredients must be an array' });
+    return res.status(400).json({ message: 'Ingredients must be an array of IDs' });
   }
 
   if (ingredients) {
-    for (const ing of ingredients) {
-      if (
-        !ing.ingredientName ||
-        typeof ing.ingredientName !== 'string' ||
-        typeof ing.quantity !== 'number' ||
-        ing.quantity <= 0 ||
-        !ing.unit ||
-        typeof ing.unit !== 'string' ||
-        typeof ing.price !== 'number' ||
-        ing.price <= 0
-      ) {
-        return res.status(400).json({ message: 'One or more ingredients are invalid' });
+    for (const id of ingredients) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Invalid ingredient ID in array' });
+      }
+      const ingredient = await Ingredient.findOne({ _id: id, userId });
+      if (!ingredient) {
+        return res.status(400).json({ message: `Ingredient with ID ${id} not found or unauthorized` });
       }
     }
   }
 
   try {
-    const dish = new Dish({ ...req.body, userId });
+    const dish = new Dish({ name, price, ingredients, description, userId, category });
     await dish.save();
 
     const stats = await computeDishStatistics(dish._id);
@@ -96,6 +119,7 @@ exports.createDish = async (req, res) => {
 
     res.status(201).json(savedDish);
   } catch (err) {
+    console.error("Error creating dish:", err);
     res.status(400).json({ message: err.message });
   }
 };
@@ -104,13 +128,13 @@ exports.createDish = async (req, res) => {
 exports.updateDish = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.userId;
+  const { name, price, ingredients, description, category } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ message: 'Invalid dish ID format' });
   }
 
-  const { name, price, ingredients, description } = req.body;
-
+  // Validation
   if (name !== undefined && (typeof name !== 'string' || name.length < 1)) {
     return res.status(400).json({ message: 'If provided, name must be a non-empty string' });
   }
@@ -123,31 +147,33 @@ exports.updateDish = async (req, res) => {
     return res.status(400).json({ message: 'If provided, description must be a string' });
   }
 
+  if (category && !ALLOWED_CATEGORIES.includes(category)) {
+    return res.status(400).json({ message: `Category must be one of: ${ALLOWED_CATEGORIES.join(', ')}` });
+  }
+
   if (ingredients !== undefined) {
     if (!Array.isArray(ingredients)) {
-      return res.status(400).json({ message: 'Ingredients must be an array' });
+      return res.status(400).json({ message: 'Ingredients must be an array of IDs' });
     }
 
-    const invalid = ingredients.some(ing =>
-      typeof ing !== 'object' ||
-      typeof ing.ingredientName !== 'string' ||
-      typeof ing.unit !== 'string' ||
-      typeof ing.quantity !== 'number' || ing.quantity <= 0 ||
-      typeof ing.price !== 'number' || ing.price <= 0
-    );
-
-    if (invalid) {
-      return res.status(400).json({ message: 'One or more ingredients are invalid' });
+    for (const id of ingredients) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Invalid ingredient ID in array' });
+      }
+      const ingredient = await Ingredient.findOne({ _id: id, userId });
+      if (!ingredient) {
+        return res.status(400).json({ message: `Ingredient with ID ${id} not found or unauthorized` });
+      }
     }
   }
 
   try {
-    const updates = pickFields(req.body, ['name', 'price', 'ingredients', 'operationalCost', 'ingredientCost', 'description']);
+    const updates = pickFields(req.body, ['name', 'price', 'ingredients', 'operationalCost', 'ingredientCost', 'description', 'category']);
     const updated = await Dish.findOneAndUpdate(
       { _id: id, userId },
       updates,
       { new: true, runValidators: true }
-    );
+    ).populate('ingredients');
 
     if (!updated) {
       return res.status(404).json({ message: 'Dish not found' });
