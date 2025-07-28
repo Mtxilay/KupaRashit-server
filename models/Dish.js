@@ -19,6 +19,7 @@ const DishSchema = new mongoose.Schema({
   ingredients: [IngredientSchema],
   salesData: [SalesDataSchema],
   image: String,
+  description: String,
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 
 });
