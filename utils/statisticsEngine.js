@@ -27,7 +27,7 @@ async function computeDishStatistics(dishId) {
   const avgDailySales = totalQuantity / Object.keys(salesByDate).length || 0;
 
   // Ingredient cost
-const ingredientCost = dish.ingredients?.reduce((sum, ing) => {
+let ingredientCost = dish.ingredients?.reduce((sum, ing) => {
   const price = ing.price != null ? ing.price : 1; // fallback default
   const quantity = ing.quantity || 1;
   return sum + price * quantity;
