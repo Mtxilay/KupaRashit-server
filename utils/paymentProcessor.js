@@ -12,7 +12,7 @@ async function processPayment(order) {
     const charge = await stripe.charges.create({
       amount: Math.round(order.totalAmount * 100), // cents
       currency: 'usd',
-      source: 'tok_visa', // test card token
+      source: sourceToken, // test card token
       description: 'Simulated order payment',
       metadata: {
         orderId: order._id.toString(),

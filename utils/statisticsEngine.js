@@ -27,13 +27,16 @@ async function computeDishStatistics(dishId) {
   const avgDailySales = totalQuantity / Object.keys(salesByDate).length || 0;
 
   // Ingredient cost
-  const ingredientCost = dish.ingredients.reduce(
-    (sum, ing) => sum + (ing.quantity * ing.price*0.1),
-    0
-  );
+const ingredientCost = dish.ingredients?.reduce((sum, ing) => {
+  const price = ing.price != null ? ing.price : 1; // fallback default
+  const quantity = ing.quantity || 1;
+  return sum + price * quantity;
+}, 0) || 0;
 
-  const operationalCost = ingredientCost * OPERATIONAL_COST_RATE;
-const suggestedPrice = ((ingredientCost || 0) + (operationalCost || 0)) * (PRICE_MARKUP || 1.5);
+
+
+  const operationalCost = (ingredientCost|| 1) * OPERATIONAL_COST_RATE;
+const suggestedPrice = ((ingredientCost || 1) + (operationalCost || 0)) * (PRICE_MARKUP || 1.5);
 
 
   // Percentage of total sales
