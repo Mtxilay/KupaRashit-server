@@ -35,8 +35,8 @@ const ingredientCost = dish.ingredients?.reduce((sum, ing) => {
 
 
 ingredientCost=ingredientCost/100;
-  const operationalCost = ((ingredientCost|| 0) * OPERATIONAL_COST_RATE)/100;
-const suggestedPrice = (((ingredientCost || 1) + (operationalCost || 0)) * (PRICE_MARKUP || 1.5))/100;
+  const operationalCost = ((ingredientCost|| 0) * OPERATIONAL_COST_RATE);
+const suggestedPrice = (((ingredientCost || 1) + (operationalCost || 0)) * (PRICE_MARKUP || 1.5));
 
 
   // Percentage of total sales
