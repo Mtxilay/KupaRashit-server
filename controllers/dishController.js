@@ -97,17 +97,21 @@ exports.createDish = async (req, res) => {
     return res.status(400).json({ message: 'Ingredients must be an array of IDs' });
   }
 
-  if (ingredients) {
-    for (const id of ingredients) {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'Invalid ingredient ID in array' });
-      }
-      const ingredient = await Ingredient.findOne({ _id: id, userId });
-      if (!ingredient) {
-        return res.status(400).json({ message: `Ingredient with ID ${id} not found or unauthorized` });
-      }
+if (ingredients) {
+  for (const entry of ingredients) {
+    if (
+      !entry.ingredient ||
+      !mongoose.Types.ObjectId.isValid(entry.ingredient)
+    ) {
+      return res.status(400).json({ message: 'Invalid ingredient structure in array' });
+    }
+    const ingredient = await Ingredient.findOne({ _id: entry.ingredient, userId });
+    if (!ingredient) {
+      return res.status(400).json({ message: `Ingredient with ID ${entry.ingredient} not found or unauthorized` });
     }
   }
+}
+
 
   try {
     const dish = new Dish({ name, price, ingredients, description, userId, category });
