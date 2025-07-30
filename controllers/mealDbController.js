@@ -81,16 +81,17 @@ exports.importMealById = async (req, res) => {
         });
       }
 
-      dishIngredients.push({
-        _id: ingredientDoc._id, // ✅ Reference by _id
-        quantity: ing.quantity
-      });
+dishIngredients.push({
+  ingredient: ingredientDoc._id,
+  quantity: ing.quantity
+});
+
     }
 
     const newDish = new Dish({
       name: meal.strMeal,
       image: meal.strMealThumb,
-      ingredients: dishIngredients, // ✅ Correct format
+      ingredients: dishIngredients, 
       suggestedPrice: 0,
       price: Math.floor(Math.random() * 50) + 20,
       salesData: [],
