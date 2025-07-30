@@ -6,7 +6,8 @@ exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.userId;
     console.log(req.user.body);
-    const { customerName, dishes } = req.body;
+    const { customerName, dishes, comment } = req.body;
+
 
     // Basic validation
     if (!customerName || !Array.isArray(dishes) || dishes.length === 0) {
@@ -27,7 +28,7 @@ exports.createOrder = async (req, res) => {
       return sum + (dish.price * item.quantity);
     }, 0);
 
-    const order = new Order({ customerName, dishes, totalAmount, userId });
+   const order = new Order({ customerName, dishes, totalAmount, userId, comment });
     const savedOrder = await order.save();
 
     res.status(201).json(savedOrder);
