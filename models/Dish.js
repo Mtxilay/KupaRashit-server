@@ -11,8 +11,9 @@ const DishSchema = new mongoose.Schema({
   suggestedPrice: Number, // calculated by server
   ingredients: [
   {
+    _id: false,
     ingredient: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient' },
-    quantity: Number
+    quantity: Number 
   }
 ],
   salesData: [SalesDataSchema],
