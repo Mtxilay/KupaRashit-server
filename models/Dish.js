@@ -21,7 +21,7 @@ const DishSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   category: {
   type: String,
-  enum: ['Appetizer', 'Main Course', 'Side Dish', 'Dessert', 'Beverage', ],
+  enum: ['Appetizer', 'Main Course', 'Side Dish', 'Dessert', 'Beverage'],
   required: true
 }
 

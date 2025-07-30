@@ -3,7 +3,7 @@ const Dish = require('../models/Dish');
 const Ingredient = require('../models/Ingredient');
 const { computeDishStatistics } = require('../utils/statisticsEngine');
 
-const ALLOWED_CATEGORIES = ['Starter', 'Main Course', 'Dessert', 'Drink', 'Side', 'Other'];
+const ALLOWED_CATEGORIES = ['Appetizer', 'Main Course', 'Side Dish', 'Dessert', 'Beverage'];
 
 // Helper: whitelist fields allowed for update
 const pickFields = (obj, fields) => {
