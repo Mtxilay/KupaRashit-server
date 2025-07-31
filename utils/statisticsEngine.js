@@ -3,7 +3,7 @@ const Dish = require('../models/Dish');
 const Review = require('../models/Review');
 
 const OPERATIONAL_COST_RATE = 0.2;
-const PRICE_MARKUP = 1.4;
+const PRICE_MARKUP = 1.2;
 
 async function computeDishStatistics(dishId) {
   const dish = await Dish.findById(dishId).populate('ingredients.ingredient');
@@ -32,11 +32,13 @@ for (const entry of dish.ingredients) {
   const ingredientDoc = entry.ingredient;
   const quantity = entry.quantity || 1;
 
-  // If ingredient is not populated properly or has no price
   if (!ingredientDoc || typeof ingredientDoc.price !== 'number') continue;
-
   ingredientCost += ingredientDoc.price * quantity;
 }
+
+const operationalCost = ingredientCost * OPERATIONAL_COST_RATE;
+const suggestedPrice = (ingredientCost + operationalCost) * PRICE_MARKUP;
+
 
 
   // Percentage of total sales
