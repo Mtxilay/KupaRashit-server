@@ -35,7 +35,7 @@ for (const entry of dish.ingredients) {
   if (!ingredientDoc || typeof ingredientDoc.price !== 'number') continue;
   ingredientCost += ingredientDoc.price * quantity;
 }
-
+ingredientCost=ingredientCost/100;
 const operationalCost = ingredientCost * OPERATIONAL_COST_RATE;
 const suggestedPrice = (ingredientCost + operationalCost) * PRICE_MARKUP;
 
