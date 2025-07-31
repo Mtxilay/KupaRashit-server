@@ -1,6 +1,8 @@
 const { computeDishStatistics } = require('../utils/statisticsEngine');
 const Dish = require('../models/Dish');
 const Review = require('../models/Review');
+const Setting = require('../models/Settings');
+
 
 
 exports.getDishStatistics = async (req, res) => {
@@ -8,6 +10,7 @@ exports.getDishStatistics = async (req, res) => {
     const { dishId } = req.params;
 
     const settings = await Setting.findOne({ userId: req.user._id }) || {};
+    console.log("Loaded settings:", settings);
 
     const stats = await computeDishStatistics(dishId, settings);
     res.json(stats);

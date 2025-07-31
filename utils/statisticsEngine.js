@@ -6,7 +6,7 @@ const Review = require('../models/Review');
 
 
 async function computeDishStatistics(dishId,settings) {
-    if(!settings){
+    if(settings){
         OPERATIONAL_COST_RATE = settings.operationalCostRate;
         PRICE_MARKUP = settings.priceMarkup;
     } 
