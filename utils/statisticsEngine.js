@@ -6,7 +6,7 @@ const OPERATIONAL_COST_RATE = 0.2;
 const PRICE_MARKUP = 1.4;
 
 async function computeDishStatistics(dishId) {
-  const dish = await Dish.findById(dishId);
+  const dish = await Dish.findById(dishId).populate('ingredients.ingredient');
   if (!dish) throw new Error('Dish not found');
 
   const reviews = await Review.find({ dishId });
@@ -26,17 +26,17 @@ async function computeDishStatistics(dishId) {
   const totalQuantity = Object.values(salesByDate).reduce((a, b) => a + b, 0);
   const avgDailySales = totalQuantity / Object.keys(salesByDate).length || 0;
 
-  // Ingredient cost
-let ingredientCost = dish.ingredients?.reduce((sum, ing) => {
-  const price = ing.price != null ? ing.price : 1; // fallback default
-  const quantity = ing.quantity || 1;
-  return sum + price * quantity;
-}, 0) || 0;
+let ingredientCost = 0;
 
+for (const entry of dish.ingredients) {
+  const ingredientDoc = entry.ingredient;
+  const quantity = entry.quantity || 1;
 
-ingredientCost=ingredientCost/100;
-  const operationalCost = ((ingredientCost|| 0) * OPERATIONAL_COST_RATE);
-const suggestedPrice = (((ingredientCost || 1) + (operationalCost || 0)) * (PRICE_MARKUP || 1.5));
+  // If ingredient is not populated properly or has no price
+  if (!ingredientDoc || typeof ingredientDoc.price !== 'number') continue;
+
+  ingredientCost += ingredientDoc.price * quantity;
+}
 
 
   // Percentage of total sales

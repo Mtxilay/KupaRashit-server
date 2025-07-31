@@ -6,20 +6,35 @@ const Ingredient = require('../models/Ingredient');
 function parseMealDbIngredients(meal) {
   const ingredients = [];
 
+  const UNIT_ALIASES = {
+    g: 'g', gram: 'g', grams: 'g',
+    kg: 'kg', kilogram: 'kg', kilograms: 'kg',
+    ml: 'ml', milliliter: 'ml', milliliters: 'ml',
+    l: 'l', liter: 'l', liters: 'l',
+    tsp: 'tsp', teaspoon: 'tsp', teaspoons: 'tsp',
+    tbsp: 'tbsp', tablespoon: 'tbsp', tablespoons: 'tbsp',
+    cup: 'cup', cups: 'cup',
+    oz: 'oz', ounce: 'oz', ounces: 'oz',
+    lb: 'lb', lbs: 'lb', pound: 'lb', pounds: 'lb',
+    clove: 'clove', cloves: 'clove',
+    slice: 'slice', slices: 'slice'
+  };
+
   for (let i = 1; i <= 20; i++) {
     const name = meal[`strIngredient${i}`];
     const measure = meal[`strMeasure${i}`];
 
     if (name && name.trim()) {
       const match = measure?.match(/^([\d/.]+)?\s*(.*)$/) || [];
-      const quantity = match[1] ? parseFloat(match[1]) : 1;
-      const unit = match[2]?.trim() || 'unit';
+      let quantity = match[1] ? parseFloat(eval(match[1])) : 1;
+      let rawUnit = match[2]?.trim().toLowerCase();
+      let unit = UNIT_ALIASES[rawUnit] || 'unit';  // Fallback explicitly
 
       ingredients.push({
         ingredientName: name.trim(),
         quantity: isNaN(quantity) ? 1 : quantity,
         unit,
-        price: 0, // default price (editable later)
+        price: 0, // editable later
         imageUrl: `https://www.themealdb.com/images/ingredients/${encodeURIComponent(name.trim())}.png`
       });
     }
@@ -27,6 +42,7 @@ function parseMealDbIngredients(meal) {
 
   return ingredients;
 }
+
 
 // SEARCH: GET /api/mealdb/search?name=pasta
 exports.searchMealsByName = async (req, res) => {
@@ -69,7 +85,11 @@ exports.importMealById = async (req, res) => {
     const dishIngredients = [];
 
     for (const ing of rawIngredients) {
-      let ingredientDoc = await Ingredient.findOne({ name: ing.ingredientName, userId });
+      let ingredientDoc = await Ingredient.findOne({
+  name: new RegExp(`^${ing.ingredientName.trim()}$`, 'i'),
+  userId
+});
+
 
       if (!ingredientDoc) {
         ingredientDoc = await Ingredient.create({
