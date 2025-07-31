@@ -6,7 +6,10 @@ const Review = require('../models/Review');
 exports.getDishStatistics = async (req, res) => {
   try {
     const { dishId } = req.params;
-    const stats = await computeDishStatistics(dishId);
+
+    const settings = await Setting.findOne({ userId: req.user._id }) || {};
+
+    const stats = await computeDishStatistics(dishId, settings);
     res.json(stats);
   } catch (err) {
     res.status(500).json({ message: 'Error calculating statistics', error: err.message });

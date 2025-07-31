@@ -41,6 +41,7 @@ app.use('/api/cashregister', cashRegisterRoutes);
 const ingredientRoutes = require('./routes/ingredientRoutes');
 app.use('/api/ingredients', ingredientRoutes);
 
+app.use("/api/settings", require("./routes/settingsRoutes"));
 
 
 

@@ -1,11 +1,16 @@
 // utils/statisticsEngine.js
 const Dish = require('../models/Dish');
 const Review = require('../models/Review');
+  let OPERATIONAL_COST_RATE = 0.2;
+  let PRICE_MARKUP = 1.2;
 
-const OPERATIONAL_COST_RATE = 0.2;
-const PRICE_MARKUP = 1.2;
 
-async function computeDishStatistics(dishId) {
+async function computeDishStatistics(dishId,settings) {
+    if(!settings){
+        OPERATIONAL_COST_RATE = settings.operationalCostRate;
+        PRICE_MARKUP = settings.priceMarkup;
+    } 
+
   const dish = await Dish.findById(dishId).populate('ingredients.ingredient');
   if (!dish) throw new Error('Dish not found');
 
